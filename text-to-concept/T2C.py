@@ -1,6 +1,6 @@
 
 
-class C2T:
+class T2C:
     
     # initialization the object
     # (f, D, clip-model, ...)
