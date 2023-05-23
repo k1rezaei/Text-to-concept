@@ -41,8 +41,8 @@ class LinearAligner():
         aligner_dict = torch.load(path_to_load)
         self.W, self.b = [aligner_dict[x].float() for x in ['W', 'b']]
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.W = self.W.to(device)
-        self.b = self.b.to(device)
+        self.W = self.W.to(device).float()
+        self.b = self.b.to(device).float()
         
     def save_W(self, path_to_save: str):
         torch.save({'b': self.b.detach().cpu(), 'W': self.W.detach().cpu()}, path_to_save)

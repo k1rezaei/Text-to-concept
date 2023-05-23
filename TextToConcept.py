@@ -70,7 +70,6 @@ class TextToConcept:
     def save_linear_aligner(self, path_to_save):
         self.linear_aligner.save_W(path_to_save)
         
-    
     def get_zeroshot_weights(self, classes, prompts):
         zeroshot_weights = []
         for c in classes:
