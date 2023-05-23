@@ -10,53 +10,43 @@ class LinearAligner():
     def train(self, ftrs1, ftrs2, epochs=6, target_variance=4.5, verbose=0) -> dict:
         lr_solver = LinearRegressionSolver()
         
-        if verbose == 1:
-            print(f'aligning from first representation space with shape ({ftrs1.shape}) to second representation space with shape ({ftrs2.shape}).')
-            print('initial variance of elements in those two spaces:')
-            print(f'first representation space variance: {lr_solver.get_variance(ftrs1)}')
-            print(f'second representation space variance: {lr_solver.get_variance(ftrs2)}')
-
+        print(f'Training Linear Aligner ...')
+        print(f'Linear Alignment: ({ftrs1.shape}) --> ({ftrs2.shape}).')
+        
         var1 = lr_solver.get_variance(ftrs1)
         var2 = lr_solver.get_variance(ftrs2)
 
         c1 = (target_variance / var1) ** 0.5
         c2 = (target_variance / var2) ** 0.5
+        
+        ftrs1 = c1 * ftrs1
+        ftrs2 = c2 * ftrs2
 
-        self.ftrs1 = c1 * ftrs1
-        self.ftrs2 = c2 * ftrs2
-
-        lr_solver.train(ftrs1, ftrs2, bias=True, epochs=epochs, batch_size=100, verbose=verbose)
+        lr_solver.train(ftrs1, ftrs2, bias=True, epochs=epochs, batch_size=100,)
         mse_train, r2_train = lr_solver.test(ftrs1, ftrs2)
         
-        if verbose == 1:
-            print(f'final (mse, r2): {mse_train, r2_train}')
+        print(f'Final MSE, R^2 = {mse_train:.3f}, {r2_train:.3f}')
         
-        mse_ftrs, r2_ftrs = lr_solver.test_each_feature(ftrs1, ftrs2)
-
-        var1 = lr_solver.get_variance_each_feature(ftrs1)
-        var2 = lr_solver.get_variance_each_feature(ftrs2)
-
         W, b = lr_solver.extract_parameters()
         W = W * c1/c2
         b = b * c1/c2
-
+        
         self.W = W
         self.b = b   
-        return {
-            'mse_train': mse_train,
-            'R2_train': r2_train,
-            'mse_train_each_features': mse_ftrs,
-            'r2_train_each_features': r2_ftrs,
-            'model1_var_each_feature': var1,
-            'model2_var_each_feature': var2,
-            'W': W,
-            'b': b,
-        }
-        
         
     def get_aligned_representation(self, ftrs):
         return ftrs @ torch.transpose(self.W, 0, 1) + self.b
     
+    def load_W(self, path_to_load: str):
+        aligner_dict = torch.load(path_to_load)
+        self.W, self.b = [aligner_dict[x].float() for x in ['W', 'b']]
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.W = self.W.to(device)
+        self.b = self.b.to(device)
+        
+    def save_W(self, path_to_save: str):
+        torch.save({'b': self.b.detach().cpu(), 'W': self.W.detach().cpu()}, path_to_save)
+        
         
 class LinearRegression(torch.nn.Module):
     def __init__(self, input_size, output_size, bias=True):
@@ -73,7 +63,7 @@ class LinearRegressionSolver():
         self.model = None
         self.criterion = torch.nn.MSELoss()
     
-    def train(self, X: np.ndarray, y: np.ndarray, bias=True, batch_size=100, epochs=20, verbose=0):
+    def train(self, X: np.ndarray, y: np.ndarray, bias=True, batch_size=100, epochs=20):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         tensor_X = torch.from_numpy(X).float()
@@ -87,11 +77,11 @@ class LinearRegressionSolver():
 
         self.model.to(device)
 
-        if verbose == 1:
-            init_mse, init_r2 = self.test(X, y)
-            print(f'initial (mse, r2): {init_mse, init_r2}')
-            self.init_result = init_r2
-
+        
+        init_mse, init_r2 = self.test(X, y)
+        print(f'Initial MSE, R^2: {init_mse:.3f}, {init_r2:.3f}')
+        
+        self.init_result = init_r2
         self.model.train()
 
         for epoch in range(epochs):
@@ -112,8 +102,8 @@ class LinearRegressionSolver():
                 optimizer.step()
 
             e_loss /= num_of_batches
-            if verbose == 1:
-                print(f'(epoch, loss): {epoch, e_loss}')
+            
+            print(f'Epoch Number, Loss: {epoch}, {e_loss:.3f}')
             
             scheduler.step()
         
@@ -127,25 +117,13 @@ class LinearRegressionSolver():
             else:
                 b = param.detach()
 
-        return W.cpu().numpy(), b.cpu().numpy()
+        return W, b
 
     
     def get_variance(self, y: np.ndarray):
         ey = np.mean(y)
         ey2 = np.mean(np.square(y))
         return ey2 - ey**2
-
-    
-    def get_variance_each_feature(self, y: np.ndarray):
-        ey = np.mean(y, axis=0)
-        ey2 = np.mean(np.square(y), axis=0)
-        return ey2 - ey ** 2
-
-    
-    def get_variance2(self, y: np.ndarray):
-        ey = np.mean(y)
-        d = (y - ey) ** 2
-        return np.mean(d)
 
     
     def test(self, X: np.ndarray, y: np.ndarray, batch_size=100):
@@ -173,30 +151,3 @@ class LinearRegressionSolver():
         total_mse_err /= num_of_batches
 
         return total_mse_err, 1 - total_mse_err / self.get_variance(y)
-
-    
-    def test_with_matrix(self, X: np.ndarray, y: np.ndarray):
-        W, b = self.extract_parameters()
-        diff = y - X @ np.transpose(W) - b
-        return np.mean(np.square(diff)), 1 - np.mean(np.square(diff)) / self.get_variance(y)
-
-    
-    def test_each_feature(self, X: np.ndarray, y: np.ndarray):
-        W, b = self.extract_parameters()
-        diff = y - X @ np.transpose(W) - b
-        mse = np.mean(np.square(diff), axis=0)
-        var = self.get_variance_each_feature(y)
-        return mse, 1 - mse / var
-    
-    
-    def test_with_matrix_given(self, X: np.ndarray, y: np.ndarray, W:np.ndarray, b:np.ndarray):
-        diff = y - X @ np.transpose(W) - b
-        return np.mean(np.square(diff)), 1 - np.mean(np.square(diff)) / self.get_variance(y)
-
-    
-    def test_each_feature_given(self, X: np.ndarray, y: np.ndarray, W:np.ndarray, b:np.ndarray):
-        diff = y - X @ np.transpose(W) - b
-        mse = np.mean(np.square(diff), axis=0)
-        var = self.get_variance_each_feature(y)
-        return mse, 1 - mse / var
-

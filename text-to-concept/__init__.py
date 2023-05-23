@@ -1,2 +1,2 @@
-from .T2C import T2C
+from .TextToConcept import TextToConcept
 
