@@ -56,12 +56,6 @@ class TextToConcept:
         self.model.eval().to(self.device)
         self.clip_model.eval().to(self.device)
     
-    
-    def load_linear_aligner(self, path_to_load):
-        self.linear_aligner = LinearAligner()
-        self.linear_aligner.load_W(path_to_load)
-    
-    
     def save_reps(self, path_to_model, path_to_clip_model):
         print(f'Saving representations')
         np.save(path_to_model, self.reps_model)
@@ -72,6 +66,13 @@ class TextToConcept:
         self.reps_model = np.load(path_to_model)
         self.reps_clip = np.load(path_to_clip_model)
     
+    def load_linear_aligner(self, path_to_load):
+        self.linear_aligner = LinearAligner()
+        self.linear_aligner.load_W(path_to_load)
+    
+    def save_linear_aligner(self, path_to_save):
+        self.linear_aligner.save_W(path_to_save)
+        
     def train_linear_aligner(self, D, save_reps=False, load_reps=False, path_to_model=None, path_to_clip_model=None, epochs=5):
         if load_reps:
             self.load_reps(path_to_model, path_to_clip_model)
@@ -86,8 +87,6 @@ class TextToConcept:
         self.linear_aligner = LinearAligner()
         self.linear_aligner.train(self.reps_model, self.reps_clip, epochs=epochs, target_variance=4.5,)
         
-    def save_linear_aligner(self, path_to_save):
-        self.linear_aligner.save_W(path_to_save)
         
     def get_zeroshot_weights(self, classes, prompts):
         zeroshot_weights = []

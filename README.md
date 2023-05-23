@@ -10,6 +10,9 @@ This repository provides the PyTorch implementation of the following paper:
 International Conference on Machine Learning (**_ICML_**), 2023.  
 open access: [arXiv](https://arxiv.org/abs/2305.06386)
 
+Please refer to [guideline.md](guideline.md) for technical details.
+two examples of using `TextToConcept` framework can be found in [notebook1](example_search_concept_logic.ipynb) and [notebook2](example_zeroshot.ipynb).
+
 ## Citation 
 If you find our work useful, please cite: 
 ```
@@ -20,6 +23,8 @@ If you find our work useful, please cite:
   year={2023}
 }
 ```
+
+
 
 
 
