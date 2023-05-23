@@ -10,8 +10,8 @@ class LinearAligner():
     def train(self, ftrs1, ftrs2, epochs=6, target_variance=4.5, verbose=0) -> dict:
         lr_solver = LinearRegressionSolver()
         
-        print(f'Training Linear Aligner ...')
-        print(f'Linear Alignment: ({ftrs1.shape}) --> ({ftrs2.shape}).')
+        print(f'Training linear aligner ...')
+        print(f'Linear alignment: ({ftrs1.shape}) --> ({ftrs2.shape}).')
         
         var1 = lr_solver.get_variance(ftrs1)
         var2 = lr_solver.get_variance(ftrs2)
@@ -98,12 +98,11 @@ class LinearRegressionSolver():
                 e_loss += loss.item()
 
                 loss.backward()
-
                 optimizer.step()
 
             e_loss /= num_of_batches
             
-            print(f'Epoch Number, Loss: {epoch}, {e_loss:.3f}')
+            print(f'Epoch number, loss: {epoch}, {e_loss:.3f}')
             
             scheduler.step()
         
