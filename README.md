@@ -11,7 +11,7 @@ International Conference on Machine Learning (**_ICML_**), 2023.
 open access: [arXiv](https://arxiv.org/abs/2305.06386)
 
 Please see [guideline.md](guideline.md) for technical details.
-two examples of using `TextToConcept` framework can be found in [notebook1](example_search_concept_logic.ipynb) and [notebook2](example_zeroshot.ipynb).
+two examples of using `TextToConcept` framework can be found in [example_search_concept_logic notebook](example_search_concept_logic.ipynb), [example_zeroshot notebook](example_zeroshot.ipynb), and [example drift notebook](example_drift.ipynb).
 
 ## Citation 
 If you find our work useful, please cite: 
