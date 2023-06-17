@@ -35,7 +35,7 @@ class LinearAligner():
         self.b = b   
         
     def get_aligned_representation(self, ftrs):
-        return ftrs @ torch.transpose(self.W, 0, 1) + self.b
+        return ftrs @ self.W.T + self.b
     
     def load_W(self, path_to_load: str):
         aligner_dict = torch.load(path_to_load)
